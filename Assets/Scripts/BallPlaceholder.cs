@@ -4,22 +4,42 @@ using UnityEngine;
 
 public class BallPlaceholder : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    private BallPlaceholderCollider ballPlaceholderCollider;
+
+    private int m_index = -1;
+    public int Index
     {
-        
+        get
+        {
+            return m_index;
+        }
+        set
+        {
+            m_index = value;
+            if (null != ballPlaceholderCollider)
+            {
+                ballPlaceholderCollider.index = value;
+            }
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public BallPlaceholderCollider BallPlaceholderCollider
     {
-        
+        get
+        {
+            return ballPlaceholderCollider;
+        }
     }
 
+    private void Awake()
+    {
+        ballPlaceholderCollider = GetComponentInChildren<BallPlaceholderCollider>();
+        Debug.Log($"BallPlaceholderCollider: {ballPlaceholderCollider}");
+    }
     // draw gizmos in editor
     private void OnDrawGizmos()
     {
-       // Gizmos.color = Color.white;
-       // Gizmos.DrawSphere(transform.position, 0.5f);
+        // Gizmos.color = Color.white;
+        // Gizmos.DrawSphere(transform.position, 0.5f);
     }
 }

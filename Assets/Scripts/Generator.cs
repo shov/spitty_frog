@@ -16,7 +16,7 @@ public class Generator : MonoBehaviour
     [SerializeField]
     private GameObject[] ballPrefabList = new GameObject[3];
 
-    private void Start()
+    private void Awake()
     {
         Instance = this;
     }

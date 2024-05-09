@@ -29,6 +29,11 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        if(GameController.Instance.IsGameOver)
+        {
+            return;
+        }
+
         var mouseScreenPose = Input.mousePosition;
         // rotate player to mouse position by player screen position and mouse screen position
         float angle = Mathf.Atan2(mouseScreenPose.y - playerScreenPos.y, mouseScreenPose.x - playerScreenPos.x) * Mathf.Rad2Deg;
@@ -46,8 +51,8 @@ public class Player : MonoBehaviour
             ball.SetActive(true);
         }
 
-        // fire
-        var fireTriggered = Input.GetMouseButtonDown(0) || Input.GetKey("Space");
+        // fire LMB or Space
+        var fireTriggered = Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space);
         if (fireTriggered && !isFiring && haveBall)
         {
             StartCoroutine(FireRoutine());
@@ -114,9 +119,9 @@ public class Player : MonoBehaviour
         if (ballComponent.State == Ball.EBallState.Snaked)
         {
             // Gameover
-            GameController.Instance.GameOver();
             Destroy(gameObject);
             Destroy(other);
+            GameController.Instance.GameOver();
         }
     }
 }

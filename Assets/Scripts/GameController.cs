@@ -9,6 +9,8 @@ public class GameController : MonoBehaviour
 
     [SerializeField]
     private GameObject gameOverSplash;
+
+    // We maybe don't IsRun (TODO consider removing)
     public bool IsRun { get; private set; } = false;
     public bool IsGameOver { get; private set; } = false;
 
