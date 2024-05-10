@@ -7,6 +7,9 @@ using UnityEngine.UI;
 public class Line : MonoBehaviour
 {
     [SerializeField]
+    private GameObject ballPrefab;
+
+    [SerializeField]
     private float moveSpeed = 70f;
 
     [SerializeField]
@@ -47,7 +50,7 @@ public class Line : MonoBehaviour
         nextBall.transform.SetParent(null);
 
         // Scale them back to normal
-        nextBall.transform.localScale = new Vector3(1, 1, 1);
+        nextBall.transform.localScale = ballPrefab.transform.localScale;
 
         ballList.RemoveAt(0);
         return nextBall;

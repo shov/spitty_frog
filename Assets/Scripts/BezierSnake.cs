@@ -17,6 +17,12 @@ public class BezierSnake : MonoBehaviour
     public ESnakeState State { get; private set; } = ESnakeState.Creep;
 
     [SerializeField]
+    private Canvas canvas;
+
+    [SerializeField]
+    private EarnScoreSpawner earnScoreSpawner;
+
+    [SerializeField]
     private GameObject ballPrefab;
 
     [SerializeField]
@@ -48,6 +54,7 @@ public class BezierSnake : MonoBehaviour
     private float injectSpeed = 5f;
     [SerializeField]
     private float shiftSpeed = 5f;
+    private float shiftOnCurStep = 0.01f;
 
 
     private List<GameObject> ballList = new List<GameObject>();
@@ -56,7 +63,8 @@ public class BezierSnake : MonoBehaviour
     private float curveLen;
     private float ballSizeOnCurve;
 
-    private Coroutine startedCoroutine;
+    private Coroutine addNextCoroutine;
+    private Coroutine injectCoroutine;
 
     private void Awake()
     {
@@ -79,10 +87,10 @@ public class BezierSnake : MonoBehaviour
     private void Update()
     {
         // only in editor mode
-        if (!Application.isEditor)
+        if (Application.isEditor)
         {
-            //DrawBezierCurve();
-            //SetEdgeCollider();
+            FillCpPosList();
+            DrawBezierCurve();
         }
 
         if (!GameController.Instance.IsRun)
@@ -90,9 +98,9 @@ public class BezierSnake : MonoBehaviour
             return;
         }
 
-        if (State == ESnakeState.Creep && startedCoroutine == null)
+        if (State == ESnakeState.Creep && addNextCoroutine == null)
         {
-            startedCoroutine = StartCoroutine(AddNextBallRoutine());
+            addNextCoroutine = StartCoroutine(AddNextBallRoutine());
         }
 
         if (State == ESnakeState.Creep)
@@ -100,13 +108,13 @@ public class BezierSnake : MonoBehaviour
             Creep();
         }
 
-        switch(State)
+        switch (State)
         {
             case ESnakeState.AddNext:
             case ESnakeState.Creep:
                 GameController.Instance.IsFireAllowed = true;
                 break;
-            
+
             default:
                 GameController.Instance.IsFireAllowed = false;
                 break;
@@ -121,12 +129,22 @@ public class BezierSnake : MonoBehaviour
         var ballGO = AddNextBall();
         yield return new WaitForSeconds(1 / nextAppearSpeed);
         State = ESnakeState.Creep;
-        startedCoroutine = null;
+        addNextCoroutine = null;
     }
 
     private GameObject AddNextBall()
     {
-        var ballGO = Generator.GetNextAtPosition(nextBallStartPlaceholder.position);
+        GameObject ballGO;
+
+        if (ballList.Count > 0)
+        {
+            ballGO = Generator.GetNextAtPosition(nextBallStartPlaceholder.position, ballList[0].GetComponent<Ball>().GetColor());
+        }
+        else
+        {
+            ballGO = Generator.GetNextAtPosition(nextBallStartPlaceholder.position);
+        }
+
         Ball ballComponent = ballGO.GetComponent<Ball>();
         ballComponent.SetState(Ball.EBallState.Snaked);
 
@@ -173,10 +191,10 @@ public class BezierSnake : MonoBehaviour
     public void LastShoot(Collider ball)
     {
         State = ESnakeState.LastShoot;
-        if (null != startedCoroutine)
+        if (null != addNextCoroutine)
         {
-            StopCoroutine(startedCoroutine);
-            startedCoroutine = null;
+            StopCoroutine(addNextCoroutine);
+            addNextCoroutine = null;
         }
 
         if (!ballPosDict.ContainsKey(ball.gameObject))
@@ -204,12 +222,16 @@ public class BezierSnake : MonoBehaviour
     public void Inject(Collider firedBallCl)
     {
         GameObject firedBall = firedBallCl.gameObject;
+        injectCoroutine = StartCoroutine(InjectRoutine(firedBall));
+    }
 
+    private IEnumerator InjectRoutine(GameObject firedBall)
+    {
         State = ESnakeState.Inject;
-        if (startedCoroutine != null)
+        if (addNextCoroutine != null)
         {
-            StopCoroutine(startedCoroutine);
-            startedCoroutine = null;
+            StopCoroutine(addNextCoroutine);
+            addNextCoroutine = null;
         }
 
         // Make it snaked
@@ -249,7 +271,9 @@ public class BezierSnake : MonoBehaviour
                 if (posList[i] < closestT && posList[i] > leftFromClosest)
                 {
                     leftFromClosest = posList[i];
-                    injectPositionIndex = i;
+                    injectPositionIndex = i + 1;
+                    // List<T>.Insert put element to position and move original (if there is) to the next
+                    // here we nned to move the next one, not the prev
                 }
             }
             if (leftFromClosest != -1 && (leftFromClosest + ballSizeOnCurve / 2) > (closestT - ballSizeOnCurve / 2))
@@ -266,8 +290,12 @@ public class BezierSnake : MonoBehaviour
         var closestPoint = CalculateBezierPointRecur(closestT, cpPosList);
         firedBallComponent.Move(closestPoint, injectSpeed);
 
-        Shift(ESnakeState.Inject);
-        Check();
+        yield return StartCoroutine(WaitBallsAreMoving());
+
+        yield return StartCoroutine(Shift(ESnakeState.Inject));
+        yield return StartCoroutine(Check());
+
+        injectCoroutine = null;
     }
 
     private void MoveNextBallRightIfOverlapRecur(float curvePos)
@@ -304,13 +332,13 @@ public class BezierSnake : MonoBehaviour
         MoveNextBallRightIfOverlapRecur(ballPosDict[ballGO]);
     }
 
-    public void Check()
+    public IEnumerator Check()
     {
         State = ESnakeState.Check;
-        if (startedCoroutine != null)
+        if (addNextCoroutine != null)
         {
-            StopCoroutine(startedCoroutine);
-            startedCoroutine = null;
+            StopCoroutine(addNextCoroutine);
+            addNextCoroutine = null;
         }
 
         bool foundARow = false;
@@ -333,20 +361,21 @@ public class BezierSnake : MonoBehaviour
             if (ball.GetColor() == colorType)
             {
                 ballCounter++;
+                toRemoveIndexList.Add(i);
                 score = ball.GetScore(score);
             }
             else
             {
+                if (foundARow)
+                {
+                    break; // need to shift and recurse
+                }
+
                 toRemoveIndexList.Clear();
                 toRemoveIndexList.Add(i);
                 ballCounter = 1;
                 colorType = ball.GetColor();
                 score = ball.GetScore(0);
-
-                if (foundARow)
-                {
-                    break; // need to shift and recurse
-                }
             }
 
             if (ballCounter >= 3)
@@ -359,41 +388,50 @@ public class BezierSnake : MonoBehaviour
         {
             GameController.Instance.AddScore(score);
 
-            // remove the balls
-            for (int i = 0; i < toRemoveIndexList.Count; i++)
+            // remove the balls, RemoveAt moves the next elements to the left so we need to remove from the end
+            for (int i = toRemoveIndexList.Count - 1; i >= 0; i--)
             {
                 var ballGO = ballList[toRemoveIndexList[i]];
                 ballList.RemoveAt(toRemoveIndexList[i]);
                 ballPosDict.Remove(ballGO);
+
+                // Spawn earn score hint
+                if(i == toRemoveIndexList.Count / 2)
+                {
+                    earnScoreSpawner.SpawnScore(ballGO.transform.position, score);
+                }
+                
                 Destroy(ballGO);
             }
 
-            Shift(ESnakeState.Check);
-            Check();
+            yield return StartCoroutine(Shift(ESnakeState.Check));
+            yield return StartCoroutine(Check());
         }
 
 
         State = ESnakeState.Creep;
     }
 
-    private void Shift(ESnakeState bakState)
+    private IEnumerator Shift(ESnakeState bakState)
     {
         State = ESnakeState.Shift;
-        if (startedCoroutine != null)
+        if (addNextCoroutine != null)
         {
-            StopCoroutine(startedCoroutine);
-            startedCoroutine = null;
+            StopCoroutine(addNextCoroutine);
+            addNextCoroutine = null;
         }
 
         // For each ball check if it has a ball on the left, it should move to the left to that ball
         if (ballList.Count < 1)
         {
             State = bakState;
-            return;
+            // immediately break the coroutine
+            yield break;
         }
 
         for (int i = 0; i < ballList.Count; i++)
         {
+            float currCurvePos = ballPosDict[ballList[i]];
             if (i == 0)
             {
                 // Shift to 0 position
@@ -407,8 +445,34 @@ public class BezierSnake : MonoBehaviour
 
             var shiftedPos = CalculateBezierPointRecur(ballPosDict[ballList[i]], cpPosList);
             var ballComponent = ballList[i].GetComponent<Ball>();
-            ballComponent.Move(shiftedPos, shiftSpeed);
+
+            List<Vector3> moveThruCurvePointList = new List<Vector3>();
+            if(System.Math.Abs(ballPosDict[ballList[i]] - currCurvePos) <= shiftOnCurStep) 
+            {
+                ballComponent.Move(shiftedPos, shiftSpeed);
+            } else
+            {
+                // Make a list of points to move the ball thru by the cyrve from currCurvePos to shiftedPos
+                float diff = System.Math.Abs(ballPosDict[ballList[i]] - currCurvePos);
+                int stepCount = (int)System.Math.Floor(diff / shiftOnCurStep);
+                float incrementor = currCurvePos <= ballPosDict[ballList[i]] ? shiftOnCurStep : -shiftOnCurStep;
+                float pointOnCurr = currCurvePos;
+                for (int j = 0; j < stepCount; j++)
+                {
+                    pointOnCurr = currCurvePos + i * incrementor;
+                    moveThruCurvePointList.Add(CalculateBezierPointRecur(pointOnCurr, cpPosList));
+                }
+                if(pointOnCurr != ballPosDict[ballList[i]])
+                {
+                    moveThruCurvePointList.Add(CalculateBezierPointRecur(ballPosDict[ballList[i]], cpPosList));
+                }
+                ballComponent.MoveByPath(moveThruCurvePointList, shiftSpeed);
+            }
+
+
         }
+
+        yield return StartCoroutine(WaitBallsAreMoving());
 
         State = bakState;
     }
@@ -423,6 +487,14 @@ public class BezierSnake : MonoBehaviour
         }
 
         return result;
+    }
+
+    private IEnumerator WaitBallsAreMoving()
+    {
+        while (null != ballList.Find(ball => ball.GetComponent<Ball>().IsMoving))
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
     }
 
     // Bezier curve
