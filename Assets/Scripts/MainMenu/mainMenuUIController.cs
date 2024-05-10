@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEditor;
 
 public class mainMenuUIController : MonoBehaviour
 {
@@ -26,11 +27,13 @@ public class mainMenuUIController : MonoBehaviour
     }
     public void ExitBtClick()
     {
+#if UNITY_EDITOR
         if (Application.isEditor)
         {
-            UnityEditor.EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
             return;
         }
+#endif
         Application.Quit();
     }
 }
