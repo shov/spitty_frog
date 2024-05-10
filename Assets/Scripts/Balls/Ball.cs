@@ -19,6 +19,17 @@ public class Ball : MonoBehaviour
         State = state;
     }
 
+    // COLOR
+    public virtual Generator.EBallType GetColor() {         
+        throw new System.NotImplementedException();
+    }
+
+    // SCORE
+    public virtual int GetScore(int stackedScore)
+    {
+        throw new System.NotImplementedException();
+    }
+
     // MOVEMENT
     protected float defaultMoveSpeed = 2f;
     protected float currentMoveSpeed = 2f;

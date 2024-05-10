@@ -34,7 +34,7 @@ public class BallPlaceholder : MonoBehaviour
     private void Awake()
     {
         ballPlaceholderCollider = GetComponentInChildren<BallPlaceholderCollider>();
-        Debug.Log($"BallPlaceholderCollider: {ballPlaceholderCollider}");
+        //Debug.Log($"BallPlaceholderCollider: {ballPlaceholderCollider}");
     }
     // draw gizmos in editor
     private void OnDrawGizmos()

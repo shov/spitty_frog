@@ -16,6 +16,12 @@ public class Player : MonoBehaviour
     [SerializeField]
     private float fireSpeed = 35f;
 
+    public float FireSpeed
+    {
+        get => fireSpeed;
+        private set => fireSpeed = value;
+    }
+
     private bool isFiring = false;
     private bool haveBall = false;
 
@@ -29,7 +35,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if(GameController.Instance.IsGameOver)
+        if(!GameController.Instance.IsRun)
         {
             return;
         }
@@ -45,7 +51,7 @@ public class Player : MonoBehaviour
             GetBall();
         }
 
-        if(haveBall && !isFiring)
+        if(haveBall && !isFiring && GameController.Instance.IsFireAllowed)
         {
             ball.transform.position = fireStartPlaceholder.transform.position;
             ball.SetActive(true);
@@ -119,9 +125,38 @@ public class Player : MonoBehaviour
         if (ballComponent.State == Ball.EBallState.Snaked)
         {
             // Gameover
-            Destroy(gameObject);
-            Destroy(other);
+            //Destroy(gameObject); looks awful
+            Destroy(other.gameObject);
+            Destroy(ball); // in mouth
+            StartCoroutine(LerpFrogColorToRed());
             GameController.Instance.GameOver();
         }
     }
+
+    private IEnumerator LerpFrogColorToRed()
+    {
+        // Gt all objects by tag to the list, then get all their materials
+        GameObject[] greenMat = GameObject.FindGameObjectsWithTag("FrogGreenBodyPart");
+        Material[] materials = new Material[greenMat.Length];
+        for (int i = 0; i < greenMat.Length; i++)
+        {
+            materials[i] = greenMat[i].GetComponent<Renderer>().material;
+        }
+        Color[] colors = new Color[materials.Length];
+
+        var startColor = colors[0];
+        var endColor = Color.red;
+        var duration = 1f;
+        var t = 0f;
+        while (t < 1)
+        {
+            t += Time.deltaTime / duration;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                colors[i] = Color.Lerp(startColor, endColor, t);
+                materials[i].color = colors[i];
+            }
+            yield return null;
+        }
+    }   
 }

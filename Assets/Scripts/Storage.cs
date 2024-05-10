@@ -6,6 +6,7 @@ public class Storage : MonoBehaviour
 {
     public static MainManager.SaveData Load()
     {
+        //Debug.Log(MainManager.SAVE_FILE_PATH);
         if (System.IO.File.Exists(MainManager.SAVE_FILE_PATH))
         {
             string json = System.IO.File.ReadAllText(MainManager.SAVE_FILE_PATH);

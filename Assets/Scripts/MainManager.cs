@@ -47,7 +47,7 @@ public class MainManager : MonoBehaviour
 
     protected void SaveScore(int score)
     {
-      var loadedData = Storage.Load();
+        var loadedData = Storage.Load();
         if (loadedData.topScore < 0 || score > loadedData.topScore)
         {
             loadedData.topScore = score;

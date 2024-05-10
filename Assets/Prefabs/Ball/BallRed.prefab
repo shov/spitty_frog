@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3275622183456271641, guid: 6cf62c12c90613c41863675745897d51, type: 3}
       propertyPath: m_Name
-      value: BallRed Variant
+      value: BallRed
       objectReference: {fileID: 0}
     - target: {fileID: 4522345469938000660, guid: 6cf62c12c90613c41863675745897d51, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -56,8 +56,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 83922849187320878, guid: 6cf62c12c90613c41863675745897d51, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3275622183456271641, guid: 6cf62c12c90613c41863675745897d51, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8819698420053361690}
   m_SourcePrefab: {fileID: 100100000, guid: 6cf62c12c90613c41863675745897d51, type: 3}
+--- !u!1 &861012661026334927 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3275622183456271641, guid: 6cf62c12c90613c41863675745897d51, type: 3}
+  m_PrefabInstance: {fileID: 2776389392747087318}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-8819698420053361690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 861012661026334927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01506b6ebcb4db748807824abb9334d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
