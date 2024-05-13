@@ -1,7 +1,7 @@
 # Spitty Frog
 Inpired by the timeless Zuma
 
-<a href="https://shov3340.itch.io/spitty-frog" target="_blank">🎮 Play on itch.io</a>
+[![Available on itch.io](http://jessemillar.github.io/available-on-itchio-badge/badge-bw.png)](https://shov3340.itch.io/spitty-frog)
 
 ## Screenshots
 ![Screenshot](Assets/Logo/screenshots/s0.png)
