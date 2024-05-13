@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -54,7 +55,7 @@ public class BezierSnake : MonoBehaviour
     private float injectSpeed = 5f;
     [SerializeField]
     private float shiftSpeed = 5f;
-    private float shiftOnCurStep = 0.01f;
+    private float shiftOnCurStep = 0.06f;
 
 
     private List<GameObject> ballList = new List<GameObject>();
@@ -72,7 +73,9 @@ public class BezierSnake : MonoBehaviour
         ballRadius = ballPrefab.transform.localScale.x / 2;
         lastPosition.OnLastPositionTouched += LastShoot;
         Curve curveComponent = curve.GetComponent<Curve>();
-        curveComponent.OnMeetFiredBall += Inject;
+
+        curveComponent.OnMeetFiredBall += BallMeetsSnakeCollider;
+        curveComponent.OnRayHitsTheCollider += Inject;
     }
 
     private void Start()
@@ -136,7 +139,10 @@ public class BezierSnake : MonoBehaviour
     {
         GameObject ballGO;
 
-        if (ballList.Count > 0)
+        if (
+            ballList.Count > 1
+            && ballList[0].GetComponent<Ball>().GetColor() == ballList[1].GetComponent<Ball>().GetColor()
+            )
         {
             ballGO = Generator.GetNextAtPosition(nextBallStartPlaceholder.position, ballList[0].GetComponent<Ball>().GetColor());
         }
@@ -219,13 +225,20 @@ public class BezierSnake : MonoBehaviour
         }
     }
 
-    public void Inject(Collider firedBallCl)
+    public void BallMeetsSnakeCollider(Collider firedBallCl)
     {
         GameObject firedBall = firedBallCl.gameObject;
-        injectCoroutine = StartCoroutine(InjectRoutine(firedBall));
+        // Make it snaked
+        var firedBallComponent = firedBall.GetComponent<Ball>();
+        firedBallComponent.SetState(Ball.EBallState.Snaked);
     }
 
-    private IEnumerator InjectRoutine(GameObject firedBall)
+    public void Inject(Vector3 hitPoint, GameObject firedBall, Action<Vector3> performFire)
+    {
+        injectCoroutine = StartCoroutine(InjectRoutine(hitPoint, firedBall, performFire));
+    }
+
+    private IEnumerator InjectRoutine(Vector3 hitPoint, GameObject firedBall, Action<Vector3> performFire)
     {
         State = ESnakeState.Inject;
         if (addNextCoroutine != null)
@@ -234,17 +247,13 @@ public class BezierSnake : MonoBehaviour
             addNextCoroutine = null;
         }
 
-        // Make it snaked
-        var firedBallComponent = firedBall.GetComponent<Ball>();
-        firedBallComponent.SetState(Ball.EBallState.Snaked);
-
         // find closest point on the curve
         float minDist = float.MaxValue;
         float closestT = 0;
         for (float t = 0; t <= 1; t += tStep)
         {
             Vector3 point = CalculateBezierPointRecur(t, cpPosList);
-            float dist = Vector3.Distance(point, firedBall.transform.position);
+            float dist = Vector3.Distance(point, hitPoint);
             if (dist < minDist)
             {
                 minDist = dist;
@@ -288,7 +297,9 @@ public class BezierSnake : MonoBehaviour
         ballList.Insert(injectPositionIndex, firedBall);
         ballPosDict[firedBall] = closestT;
         var closestPoint = CalculateBezierPointRecur(closestT, cpPosList);
-        firedBallComponent.Move(closestPoint, injectSpeed);
+
+        // Send theball to the closest point
+        performFire(closestPoint);
 
         yield return StartCoroutine(WaitBallsAreMoving());
 
@@ -396,11 +407,11 @@ public class BezierSnake : MonoBehaviour
                 ballPosDict.Remove(ballGO);
 
                 // Spawn earn score hint
-                if(i == toRemoveIndexList.Count / 2)
+                if (i == toRemoveIndexList.Count / 2)
                 {
                     earnScoreSpawner.SpawnScore(ballGO.transform.position, score);
                 }
-                
+
                 Destroy(ballGO);
             }
 
@@ -447,10 +458,11 @@ public class BezierSnake : MonoBehaviour
             var ballComponent = ballList[i].GetComponent<Ball>();
 
             List<Vector3> moveThruCurvePointList = new List<Vector3>();
-            if(System.Math.Abs(ballPosDict[ballList[i]] - currCurvePos) <= shiftOnCurStep) 
+            if (System.Math.Abs(ballPosDict[ballList[i]] - currCurvePos) <= shiftOnCurStep)
             {
                 ballComponent.Move(shiftedPos, shiftSpeed);
-            } else
+            }
+            else
             {
                 // Make a list of points to move the ball thru by the cyrve from currCurvePos to shiftedPos
                 float diff = System.Math.Abs(ballPosDict[ballList[i]] - currCurvePos);
@@ -462,7 +474,7 @@ public class BezierSnake : MonoBehaviour
                     pointOnCurr = currCurvePos + i * incrementor;
                     moveThruCurvePointList.Add(CalculateBezierPointRecur(pointOnCurr, cpPosList));
                 }
-                if(pointOnCurr != ballPosDict[ballList[i]])
+                if (pointOnCurr != ballPosDict[ballList[i]])
                 {
                     moveThruCurvePointList.Add(CalculateBezierPointRecur(ballPosDict[ballList[i]], cpPosList));
                 }

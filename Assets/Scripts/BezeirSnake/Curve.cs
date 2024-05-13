@@ -1,12 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Curve : MonoBehaviour
 {
+    public static readonly string TAG = "CurveCollider";
+
     public delegate void OnMeetFiredBallHandler(Collider ball);
 
     public event OnMeetFiredBallHandler OnMeetFiredBall;
+
+    public delegate void OnRayHitsTheColliderHandler(Vector3 hitPoint, GameObject firedBall, Action<Vector3> performFire);
+
+    public event OnRayHitsTheColliderHandler OnRayHitsTheCollider;
 
     protected GameObject generatedColliderMesh;
 
@@ -24,13 +31,23 @@ public class Curve : MonoBehaviour
         Rigidbody rb = generatedColliderMesh.AddComponent<Rigidbody>();
         rb.isKinematic = true;
         CurveGenMeshCollider cgmCollider = generatedColliderMesh.AddComponent<CurveGenMeshCollider>();
+
+        // Set tag
+        generatedColliderMesh.tag = TAG;
+
+        // Subscribe events
         cgmCollider.OnMeetFiredBall += PassTriggerEnter;
+        cgmCollider.OnRayHitsTheCollider += PassRayHitsTheCollider;
     }
 
     public void PassTriggerEnter(Collider other)
     {
-        // Fire the event
         OnMeetFiredBall?.Invoke(other);
+    }
+
+    public void PassRayHitsTheCollider(Vector3 hitPoint, GameObject firedBall, Action<Vector3> performFire)
+    {
+        OnRayHitsTheCollider?.Invoke(hitPoint, firedBall, performFire);
     }
 
     // Gen Mesh along the curve

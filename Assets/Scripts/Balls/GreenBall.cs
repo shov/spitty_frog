@@ -5,7 +5,7 @@ using UnityEngine;
 public class GreenBall : Ball
 {
     
-    private const int baseScore = 2;
+    private const int baseScore = 4;
     public override Generator.EBallType GetColor()
     {
         return Generator.EBallType.Green;

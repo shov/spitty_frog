@@ -16,6 +16,9 @@ public class Player : MonoBehaviour
     [SerializeField]
     private float fireSpeed = 35f;
 
+    [SerializeField]
+    private float fireDistance = 100f;
+
     public float FireSpeed
     {
         get => fireSpeed;
@@ -69,21 +72,47 @@ public class Player : MonoBehaviour
     {
         isFiring = true;
 
-        Fire();
+        FireRay();
         yield return new WaitForSeconds(0.5f);
 
         isFiring = false;
     }
 
-    protected void Fire()
+    protected void FireBall(Vector3 destination)
     {
-        var directionedPos = transform.position + transform.forward * 100f;
         // Remove parent
         ball.transform.SetParent(null);
         // Fire
-        ball.GetComponent<Ball>().Move(directionedPos, fireSpeed);
+        ball.GetComponent<Ball>().Move(destination, fireSpeed);
         // Have no ball anymore
         haveBall = false;
+    }
+
+    protected void FireRay()
+    {
+        // Raycast from player to forward
+        var ray = new Ray(transform.position, transform.forward);
+
+        // Trace ray in editor
+        Debug.DrawRay(ray.origin, ray.direction * fireDistance, Color.red, 5f);
+
+        RaycastHit[] hitList = Physics.RaycastAll(ray, fireDistance);
+        foreach(var hit in hitList)
+        {
+            if(hit.collider.CompareTag(Curve.TAG))
+            {
+                // Get the CurveCollider component
+                var curveCollider = hit.collider.GetComponent<CurveGenMeshCollider>();
+                Vector3 vector3 = hit.point;
+
+                curveCollider.RayHitsTheCollider(vector3, ball, (Vector3 destination) => FireBall(destination));
+                return;
+            }
+        }
+
+        Vector3 destination = transform.position + transform.forward * 100f;
+
+        FireBall(destination); // predictable miss
     }
 
     protected void GetBall()
