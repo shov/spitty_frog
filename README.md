@@ -1,5 +1,11 @@
 # Spitty Frog
-Inpired by the timeless Zooma
+Inpired by the timeless Zuma
+
+<a href="https://shov3340.itch.io/spitty-frog" target="_blank">🎮 Play on itch.io</a>
+
+## Screenshots
+![Screenshot](Assets/Logo/screenshots/s0.png)
+![Screenshot](Assets/Logo/screenshots/s1.png)
 
 ## Menu Scene
 * Start
@@ -11,7 +17,7 @@ Only one level so far.
 
 #### Controlls
 * Esc - exit to Main menu
-* RMB or Space - fire
+* LMB or Space - fire
 * anykey - loads main menu if game over
 
 #### Game entities
