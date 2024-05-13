@@ -11,6 +11,7 @@ public class Generator : MonoBehaviour
         Blue
     }
 
+    // ENCAPSULATION
     public static Generator Instance { get; private set; }
 
     [SerializeField]

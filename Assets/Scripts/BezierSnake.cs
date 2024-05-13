@@ -80,9 +80,11 @@ public class BezierSnake : MonoBehaviour
 
     private void Start()
     {
+        // ABSTRACTION
         FillCpPosList();
 
         curve.SetActive(true);
+        // ABSTRACTION
         DrawBezierCurve();
         GameController.Instance.Resume(); // Start the game running
     }
@@ -108,6 +110,7 @@ public class BezierSnake : MonoBehaviour
 
         if (State == ESnakeState.Creep)
         {
+            // ABSTRACTION
             Creep();
         }
 
@@ -301,6 +304,7 @@ public class BezierSnake : MonoBehaviour
         // Send theball to the closest point
         performFire(closestPoint);
 
+        // ABSTRACTION
         yield return StartCoroutine(WaitBallsAreMoving());
 
         yield return StartCoroutine(Shift(ESnakeState.Inject));
@@ -340,6 +344,7 @@ public class BezierSnake : MonoBehaviour
         var ballComponent = ballGO.GetComponent<Ball>();
         ballComponent.Move(rightShiftedPos, injectSpeed);
 
+        // ABSTRACTION
         MoveNextBallRightIfOverlapRecur(ballPosDict[ballGO]);
     }
 
@@ -369,10 +374,12 @@ public class BezierSnake : MonoBehaviour
                 continue;
             }
 
+            // POLYMORPHISM
             if (ball.GetColor() == colorType)
             {
                 ballCounter++;
                 toRemoveIndexList.Add(i);
+                // POLYMORPHISM
                 score = ball.GetScore(score);
             }
             else
@@ -415,6 +422,7 @@ public class BezierSnake : MonoBehaviour
                 Destroy(ballGO);
             }
 
+            // ABSTRACTION
             yield return StartCoroutine(Shift(ESnakeState.Check));
             yield return StartCoroutine(Check());
         }
@@ -484,6 +492,7 @@ public class BezierSnake : MonoBehaviour
 
         }
 
+        // ABSTRACTION
         yield return StartCoroutine(WaitBallsAreMoving());
 
         State = bakState;
