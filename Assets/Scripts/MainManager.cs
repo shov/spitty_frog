@@ -11,10 +11,13 @@ public class MainManager : MonoBehaviour
         public int topScore;
     }
 
+    // ENCAPSULATION
     public static MainManager Instance { get; private set; }
     public static string SAVE_FILE_PATH;
 
     protected int m_score = 0;
+
+    // ENCAPSULATION
     public int Score
     {
         get
